@@ -1,0 +1,34 @@
+:foreach line in=[/log find buffer=ovpnlogin message~"authentication failed>"] do={
+
+ :do {:local content [/log get $line message];
+
+  :put $content;
+
+  :local pos1 [:find $content "<^[1-9]" 0];
+  :put $pos1;
+  :local pos2 [:find $content ">"];
+  :local badip [:pick $content ($pos1+1) ($pos2)];  
+  :put $badip
+  :local badip1 true;
+
+  :foreach i in=[/ip fi ad print as-value where list=badovpn1] do={
+
+  :if (($i->"address")=$badip) do={
+
+  :set badip1 false;
+
+  :put "badip=$badip1";
+        }
+       }
+  :local badipadlist1 [:do {/ ip firewall address-list add list=badovpn1 address=$badip timeout=600} on-error={}];
+  :if ($badip1=false) do={
+  :local badipadlist [:do {/ ip firewall address-list add list=badovpn2 address=$badip timeout=600} on-error={:do {/ ip firewall address-list add list=badovpn address=$badip} on-error={}}];
+     }
+    }
+  }
+
+  /system logging action set l2tplogin memory-lines=1;
+
+  delay 300ms
+
+  /system logging action set l2tplogin memory-lines=1000;
