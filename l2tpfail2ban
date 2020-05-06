@@ -1,0 +1,33 @@
+:foreach line in=[/log find buffer=l2tplogin message~"sent CHAP Failure id="] do={
+
+ :do {:local content [/log get $line message];
+
+  :put $content;
+
+  :local pos1 [:find $content "<" 0];
+  :local pos2 [:find $content ">"];
+  :local badip [:pick $content ($pos1+1) ($pos2)];  
+  :put $badip
+  :local badip1 true;
+
+  :foreach i in=[/ip fi ad print as-value where list=badl2tp1] do={
+
+  :if (($i->"address")=$badip) do={
+
+  :set badip1 false;
+
+  :put "badip=$badip1";
+        }
+       }
+  :local badipadlist1 [:do {/ ip firewall address-list add list=badl2tp1 address=$badip timeout=600} on-error={}];
+  :if ($badip1=false) do={
+  :local badipadlist [:do {/ ip firewall address-list add list=badl2tp2 address=$badip timeout=600} on-error={:do {/ ip firewall address-list add list=badl2tp address=$badip} on-error={}}];
+     }
+    }
+  }
+
+  /system logging action set l2tplogin memory-lines=1;
+
+  delay 300ms
+
+  /system logging action set l2tplogin memory-lines=1000;
