@@ -1,0 +1,33 @@
+:foreach line in=[/log find buffer=login message~"login failure for"] do={
+
+ :do {:local content [/log get $line message];
+
+  :put $content;
+
+  :local pos1 [:find $content "from " 0];
+  :local pos2 [:find $content " via"];
+  :local badip [:pick $content ($pos1+5) ($pos2)];  
+  :put $badip
+  :local badip1 true;
+
+  :foreach i in=[/ip fi ad print as-value where list=badip1] do={
+
+  :if (($i->"address")=$badip) do={
+
+  :set badip1 false;
+
+  :put "badip=$badip1";
+        }
+       }
+  :local badipadlist1 [:do {/ ip firewall address-list add list=badip1 address=$badip timeout=600} on-error={}];
+  :if ($badip1=false) do={
+  :local badipadlist [:do {/ ip firewall address-list add list=badip2 address=$badip timeout=600} on-error={:do {/ ip firewall address-list add list=badip address=$badip} on-error={}}];
+     }
+    }
+  }
+
+  /system logging action set login memory-lines=1;
+
+  delay 300ms
+
+  /system logging action set login memory-lines=1000;
