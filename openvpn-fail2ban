@@ -27,8 +27,8 @@
     }
   }
 
-  /system logging action set l2tplogin memory-lines=1;
+  /system logging action set ovpnlogin memory-lines=1;
 
   delay 300ms
 
-  /system logging action set l2tplogin memory-lines=1000;
+  /system logging action set ovpnlogin memory-lines=1000;
